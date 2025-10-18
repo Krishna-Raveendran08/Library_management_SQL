@@ -408,7 +408,37 @@ GROUP BY 1, 2
 
 **Task 18: Identify Members Issuing High-Risk Books**  
 Write a query to identify members who have issued books more than twice with the status "damaged" in the books table. Display the member name, book title, and the number of times they've issued damaged books.    
+SELECT * FROM books;
+SELECT * FROM issued_status;
+SELECT * FROM return_status;
+SELECT * FROM members;
 
+
+-- IS116 , IS110 - Both these books are issued by C110 in damaged status
+
+SELECT 
+	-- m.member_id,
+	-- m.member_name,
+	-- ist.issued_book_name,
+	-- rs.book_quality,
+	-- COUNT(ist.issued_id)
+```sql
+SELECT
+	ist.issued_member_id,
+	m.member_name,
+	ist.issued_book_name,
+	COUNT(*)
+FROM return_status AS rs
+JOIN
+issued_status AS ist
+ON ist.issued_id = rs.issued_id
+JOIN 
+members AS m
+ON m.member_id = ist.issued_member_id
+WHERE rs.book_quality = 'Damaged'
+GROUP BY 1,2,3
+HAVING COUNT(*) >=1;
+```
 
 **Task 19: Stored Procedure**
 Objective:
@@ -487,7 +517,34 @@ Description: Write a CTAS query to create a new table that lists each member and
     Number of overdue books
     Total fines
 
+```sql
+CREATE TABLE AS overdue_fines_summary
+SELECT 
+ist.issued_member_id,
+COUNT(ist.issued_id),
+SUM(
+	CASE
+		WHEN CURRENT_DATE > ist.issued_date + INTERVAL '30 days'
+		AND
+		(rs.return_date IS NULL 
+		OR rs.return_date > ist.issued_date + INTERVAL '30 days')
+	THEN
+		COALESCE(EXTRACT (DAY FROM(COALESCE(rs.return_date,CURRENT_DATE) - (ist.issued_date + INTERVAL'30 days'))),
+		0
 
+		)
+		 * 0.50
+		ELSE 0
+		END
+	) AS total_fine
+FROM issued_status AS ist
+LEFT JOIN return_status AS rs
+ON rs.issued_id = ist.issued_id
+WHERE rs.return_date IS NULL 
+OR
+rs.return_date > ist.issued_date + INTERVAL '30 days'
+GROUP BY 1
+```
 
 ## Reports
 
@@ -510,13 +567,4 @@ This project demonstrates the application of SQL skills in creating and managing
 3. **Run the Queries**: Use the SQL queries in the `analysis_queries.sql` file to perform the analysis.
 4. **Explore and Modify**: Customize the queries as needed to explore different aspects of the data or answer additional questions.
 
-## Author - Zero Analyst
 
-This project showcases SQL skills essential for database management and analysis. For more content on SQL and data analysis, connect with me through the following channels:
-
-- **YouTube**: [Subscribe to my channel for tutorials and insights](https://www.youtube.com/@zero_analyst)
-- **Instagram**: [Follow me for daily tips and updates](https://www.instagram.com/zero_analyst/)
-- **LinkedIn**: [Connect with me professionally](https://www.linkedin.com/in/najirr)
-- **Discord**: [Join our community for learning and collaboration](https://discord.gg/36h5f2Z5PK)
-
-Thank you for your interest in this project!
